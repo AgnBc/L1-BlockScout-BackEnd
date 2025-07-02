@@ -2863,9 +2863,9 @@ defmodule BlockScoutWeb.API.RPC.AddressControllerTest do
 
       assert response =
                %{"result" => results} =
-                 conn
-                 |> get("/api", params)
-                 |> json_response(200)
+               conn
+               |> get("/api", params)
+               |> json_response(200)
 
       assert length(results) == 1
 
@@ -2903,9 +2903,9 @@ defmodule BlockScoutWeb.API.RPC.AddressControllerTest do
 
       assert response =
                %{"result" => results} =
-                 conn
-                 |> get("/api", params)
-                 |> json_response(200)
+               conn
+               |> get("/api", params)
+               |> json_response(200)
 
       assert length(results) == 3
 
@@ -2928,9 +2928,9 @@ defmodule BlockScoutWeb.API.RPC.AddressControllerTest do
     test "returns all the required fields", %{conn: conn, params: params} do
       transaction =
         %{block: block} =
-          :transaction
-          |> insert()
-          |> with_block()
+        :transaction
+        |> insert()
+        |> with_block()
 
       token_address = insert(:contract_address)
       token = insert(:token, contract_address: token_address, type: "ERC-1155")
@@ -3034,9 +3034,9 @@ defmodule BlockScoutWeb.API.RPC.AddressControllerTest do
 
       assert response =
                %{"result" => [result]} =
-                 conn
-                 |> get("/api", params)
-                 |> json_response(200)
+               conn
+               |> get("/api", params)
+               |> json_response(200)
 
       assert result["contractAddress"] == to_string(contract_address.hash)
       assert response["status"] == "1"
@@ -3148,39 +3148,84 @@ defmodule BlockScoutWeb.API.RPC.AddressControllerTest do
                |> json_response(200)
 
       assert Enum.at(token_transfers_1, 0)["hash"] == to_string(Enum.at(erc_1155_tt_reversed, 0).transaction_hash)
-      assert Enum.at(token_transfers_1, 0)["tokenID"] == to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 0).token_ids, 1))
-      assert Enum.at(token_transfers_1, 0)["tokenValue"] == to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 0).amounts, 1))
+
+      assert Enum.at(token_transfers_1, 0)["tokenID"] ==
+               to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 0).token_ids, 1))
+
+      assert Enum.at(token_transfers_1, 0)["tokenValue"] ==
+               to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 0).amounts, 1))
+
       assert Enum.at(token_transfers_1, 1)["hash"] == to_string(Enum.at(erc_1155_tt_reversed, 0).transaction_hash)
-      assert Enum.at(token_transfers_1, 1)["tokenID"] == to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 0).token_ids, 0))
-      assert Enum.at(token_transfers_1, 1)["tokenValue"] == to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 0).amounts, 0))
+
+      assert Enum.at(token_transfers_1, 1)["tokenID"] ==
+               to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 0).token_ids, 0))
+
+      assert Enum.at(token_transfers_1, 1)["tokenValue"] ==
+               to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 0).amounts, 0))
 
       assert Enum.at(token_transfers_1, 48)["hash"] == to_string(Enum.at(erc_1155_tt_reversed, 24).transaction_hash)
-      assert Enum.at(token_transfers_1, 48)["tokenID"] == to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 24).token_ids, 1))
-      assert Enum.at(token_transfers_1, 48)["tokenValue"] == to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 24).amounts, 1))
+
+      assert Enum.at(token_transfers_1, 48)["tokenID"] ==
+               to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 24).token_ids, 1))
+
+      assert Enum.at(token_transfers_1, 48)["tokenValue"] ==
+               to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 24).amounts, 1))
+
       assert Enum.at(token_transfers_1, 49)["hash"] == to_string(Enum.at(erc_1155_tt_reversed, 24).transaction_hash)
-      assert Enum.at(token_transfers_1, 49)["tokenID"] == to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 24).token_ids, 0))
-      assert Enum.at(token_transfers_1, 49)["tokenValue"] == to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 24).amounts, 0))
+
+      assert Enum.at(token_transfers_1, 49)["tokenID"] ==
+               to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 24).token_ids, 0))
+
+      assert Enum.at(token_transfers_1, 49)["tokenValue"] ==
+               to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 24).amounts, 0))
 
       assert Enum.at(token_transfers_2, 0)["hash"] == to_string(Enum.at(erc_1155_tt_reversed, 25).transaction_hash)
-      assert Enum.at(token_transfers_2, 0)["tokenID"] == to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 25).token_ids, 1))
-      assert Enum.at(token_transfers_2, 0)["tokenValue"] == to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 25).amounts, 1))
+
+      assert Enum.at(token_transfers_2, 0)["tokenID"] ==
+               to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 25).token_ids, 1))
+
+      assert Enum.at(token_transfers_2, 0)["tokenValue"] ==
+               to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 25).amounts, 1))
+
       assert Enum.at(token_transfers_2, 1)["hash"] == to_string(Enum.at(erc_1155_tt_reversed, 25).transaction_hash)
-      assert Enum.at(token_transfers_2, 1)["tokenID"] == to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 25).token_ids, 0))
-      assert Enum.at(token_transfers_2, 1)["tokenValue"] == to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 25).amounts, 0))
+
+      assert Enum.at(token_transfers_2, 1)["tokenID"] ==
+               to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 25).token_ids, 0))
+
+      assert Enum.at(token_transfers_2, 1)["tokenValue"] ==
+               to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 25).amounts, 0))
 
       assert Enum.at(token_transfers_2, 48)["hash"] == to_string(Enum.at(erc_1155_tt_reversed, 49).transaction_hash)
-      assert Enum.at(token_transfers_2, 48)["tokenID"] == to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 49).token_ids, 1))
-      assert Enum.at(token_transfers_2, 48)["tokenValue"] == to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 49).amounts, 1))
+
+      assert Enum.at(token_transfers_2, 48)["tokenID"] ==
+               to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 49).token_ids, 1))
+
+      assert Enum.at(token_transfers_2, 48)["tokenValue"] ==
+               to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 49).amounts, 1))
+
       assert Enum.at(token_transfers_2, 49)["hash"] == to_string(Enum.at(erc_1155_tt_reversed, 49).transaction_hash)
-      assert Enum.at(token_transfers_2, 49)["tokenID"] == to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 49).token_ids, 0))
-      assert Enum.at(token_transfers_2, 49)["tokenValue"] == to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 49).amounts, 0))
+
+      assert Enum.at(token_transfers_2, 49)["tokenID"] ==
+               to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 49).token_ids, 0))
+
+      assert Enum.at(token_transfers_2, 49)["tokenValue"] ==
+               to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 49).amounts, 0))
 
       assert Enum.at(token_transfers_3, 0)["hash"] == to_string(Enum.at(erc_1155_tt_reversed, 50).transaction_hash)
-      assert Enum.at(token_transfers_3, 0)["tokenID"] == to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 50).token_ids, 1))
-      assert Enum.at(token_transfers_3, 0)["tokenValue"] == to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 50).amounts, 1))
+
+      assert Enum.at(token_transfers_3, 0)["tokenID"] ==
+               to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 50).token_ids, 1))
+
+      assert Enum.at(token_transfers_3, 0)["tokenValue"] ==
+               to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 50).amounts, 1))
+
       assert Enum.at(token_transfers_3, 1)["hash"] == to_string(Enum.at(erc_1155_tt_reversed, 50).transaction_hash)
-      assert Enum.at(token_transfers_3, 1)["tokenID"] == to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 50).token_ids, 0))
-      assert Enum.at(token_transfers_3, 1)["tokenValue"] == to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 50).amounts, 0))
+
+      assert Enum.at(token_transfers_3, 1)["tokenID"] ==
+               to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 50).token_ids, 0))
+
+      assert Enum.at(token_transfers_3, 1)["tokenValue"] ==
+               to_string(Enum.at(Enum.at(erc_1155_tt_reversed, 50).amounts, 0))
 
       assert Enum.count(token_transfers_3) == 2
     end

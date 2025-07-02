@@ -299,113 +299,28 @@ defmodule Explorer.Etherscan do
     )
   end
 
-  @doc """
-  Gets a list of token transfers for a given `t:Explorer.Chain.Hash.Address.t/0`.
+  def list_token_transfers(token_transfers_type, address_hash, contract_address_hash, options) do
+    options = Map.merge(@default_options, options)
 
-  """
-  @spec list_token_transfers(Hash.Address.t(), Hash.Address.t() | nil, map()) :: [map()]
-  def list_token_transfers(
-        %Hash{byte_count: unquote(Hash.Address.byte_count())} = address_hash,
-        contract_address_hash,
-        options \\ @default_options
-      ) do
     case Chain.max_consensus_block_number() do
       {:ok, block_height} ->
-        merged_options = Map.merge(@default_options, options)
-        list_token_transfers(address_hash, contract_address_hash, block_height, merged_options)
+        case token_transfers_type do
+          :erc20 ->
+            list_erc20_token_transfers(address_hash, contract_address_hash, block_height, options)
+
+          :erc721 ->
+            list_nft_transfers(address_hash, contract_address_hash, block_height, options)
+
+          :erc1155 ->
+            list_erc1155_transfers(address_hash, contract_address_hash, block_height, options)
+
+          :erc404 ->
+            list_erc404_token_transfers(address_hash, contract_address_hash, block_height, options)
+        end
 
       _ ->
         []
     end
-  end
-
-  @doc """
-    Gets a list of ERC-721 token transfers for a given address_hash. If contract_address_hash is not nil, transfers will be filtered by contract.
-  """
-  @spec list_nft_transfers(Hash.Address.t(), Hash.Address.t() | nil, map()) :: [TokenTransfer.t()]
-  def list_nft_transfers(
-        %Hash{byte_count: unquote(Hash.Address.byte_count())} = address_hash,
-        contract_address_hash,
-        options \\ @default_options
-      ) do
-    options
-    |> base_nft_transfers_query(contract_address_hash)
-    |> where([tt], tt.from_address_hash == ^address_hash or tt.to_address_hash == ^address_hash)
-    |> Repo.replica().all()
-  end
-
-  @doc """
-    Gets a list of ERC-721 token transfers for a given token contract_address_hash.
-  """
-  @spec list_nft_transfers_by_token(Hash.Address.t(), map()) :: [TokenTransfer.t()]
-  def list_nft_transfers_by_token(
-        %Hash{byte_count: unquote(Hash.Address.byte_count())} = contract_address_hash,
-        options \\ @default_options
-      ) do
-    options
-    |> base_nft_transfers_query(contract_address_hash)
-    |> Repo.replica().all()
-  end
-
-  defp base_nft_transfers_query(options, contract_address_hash) do
-    options = Map.merge(@default_options, options)
-
-    TokenTransfer.erc_721_token_transfers_query()
-    |> where_contract_address_match(contract_address_hash)
-    |> order_by([tt], [
-      {^options.order_by_direction, tt.block_number},
-      {^options.order_by_direction, tt.log_index}
-    ])
-    |> where_start_block_match_tt(options)
-    |> where_end_block_match_tt(options)
-    |> limit(^options.page_size)
-    |> offset(^offset(options))
-    |> maybe_preload_block()
-  end
-
-  @doc """
-    Gets a list of ERC-1155 token transfers for a given address_hash. If contract_address_hash is not nil, transfers will be filtered by contract.
-  """
-  @spec list_erc1155_transfers(Hash.Address.t(), Hash.Address.t() | nil, map()) :: [TokenTransfer.t()]
-  def list_erc1155_transfers(
-        %Hash{byte_count: unquote(Hash.Address.byte_count())} = address_hash,
-        contract_address_hash,
-        options \\ @default_options
-      ) do
-    options
-    |> base_erc1155_transfers_query(contract_address_hash)
-    |> where([tt], tt.from_address_hash == ^address_hash or tt.to_address_hash == ^address_hash)
-    |> Repo.replica().all()
-  end
-
-  @doc """
-    Gets a list of ERC-1155 token transfers for a given token contract_address_hash.
-  """
-  @spec list_erc1155_transfers_by_token(Hash.Address.t(), map()) :: [TokenTransfer.t()]
-  def list_erc1155_transfers_by_token(
-        %Hash{byte_count: unquote(Hash.Address.byte_count())} = contract_address_hash,
-        options \\ @default_options
-      ) do
-    options
-    |> base_erc1155_transfers_query(contract_address_hash)
-    |> Repo.replica().all()
-  end
-
-  defp base_erc1155_transfers_query(options, contract_address_hash) do
-    options = Map.merge(@default_options, options)
-
-    TokenTransfer.erc_1155_token_transfers_exploded_query()
-    |> where_contract_address_match(contract_address_hash)
-    |> order_by([tt, unnest: unnest], [
-      {^options.order_by_direction, tt.block_number},
-      {^options.order_by_direction, tt.log_index},
-      # to guarantee paginated order
-      {^options.order_by_direction, fragment("?::numeric", field(unnest, :token_id))},
-    ])
-    |> where_start_block_match_tt(options)
-    |> where_end_block_match_tt(options)
-    |> limit(^options.page_size)
-    |> offset(^offset(options))
   end
 
   defp maybe_preload_block(query) do
@@ -623,11 +538,12 @@ defmodule Explorer.Etherscan do
     amounts
   )a
 
-  defp list_token_transfers(address_hash, contract_address_hash, block_height, options) do
+  defp list_erc20_token_transfers(address_hash, contract_address_hash, block_height, options) do
     tt_query =
       from(
         tt in TokenTransfer,
         inner_join: tkn in assoc(tt, :token),
+        where: tt.token_type == "ERC-20",
         where: tt.from_address_hash == ^address_hash,
         or_where: tt.to_address_hash == ^address_hash,
         order_by: [{^options.order_by_direction, tt.block_number}, {^options.order_by_direction, tt.log_index}],
@@ -655,6 +571,7 @@ defmodule Explorer.Etherscan do
       |> where_start_block_match_tt(options)
       |> where_end_block_match_tt(options)
       |> where_contract_address_match(contract_address_hash)
+      |> where_address_match_token_transfer(address_hash)
 
     wrapped_query =
       if DenormalizationHelper.transactions_denormalization_finished?() do
@@ -731,6 +648,41 @@ defmodule Explorer.Etherscan do
     |> Repo.replica().all()
   end
 
+  defp list_nft_transfers(address_hash, contract_address_hash, block_height, options) do
+    TokenTransfer.erc_721_token_transfers_query()
+    |> where_contract_address_match(contract_address_hash)
+    |> where_address_match_token_transfer(address_hash)
+    |> order_by([tt], [
+      {^options.order_by_direction, tt.block_number},
+      {^options.order_by_direction, tt.log_index}
+    ])
+    |> where_start_block_match_tt(options)
+    |> where_end_block_match_tt(options)
+    |> limit(^options.page_size)
+    |> offset(^offset(options))
+    |> maybe_preload_block()
+    |> Repo.replica().all()
+  end
+
+  defp list_erc1155_token_transfers(address_hash, contract_address_hash, block_height, options) do
+    TokenTransfer.erc_1155_token_transfers_exploded_query()
+    |> where_contract_address_match(contract_address_hash)
+    |> where_address_match_token_transfer(address_hash)
+    |> order_by([tt, unnest: unnest], [
+      {^options.order_by_direction, tt.block_number},
+      {^options.order_by_direction, tt.log_index},
+      # to guarantee paginated order
+      {^options.order_by_direction, fragment("?::numeric", field(unnest, :token_id))}
+    ])
+    |> where_start_block_match_tt(options)
+    |> where_end_block_match_tt(options)
+    |> limit(^options.page_size)
+    |> offset(^offset(options))
+  end
+
+  defp list_erc404_token_transfers(address_hash, contract_address_hash, block_height, options) do
+  end
+
   defp where_start_block_match(query, %{startblock: nil}), do: query
 
   defp where_start_block_match(query, %{startblock: start_block}) do
@@ -799,6 +751,12 @@ defmodule Explorer.Etherscan do
 
   defp where_contract_address_match(query, contract_address_hash) do
     where(query, [tt], tt.token_contract_address_hash == ^contract_address_hash)
+  end
+
+  defp where_address_match_token_transfer(query, nil), do: query
+
+  defp where_address_match_token_transfer(query, address_hash) do
+    where(query, [tt], tt.from_address_hash == ^address_hash or tt.to_address_hash == ^address_hash)
   end
 
   defp offset(options), do: (options.page_number - 1) * options.page_size
